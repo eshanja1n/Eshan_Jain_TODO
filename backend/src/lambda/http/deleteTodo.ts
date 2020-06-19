@@ -15,7 +15,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   if (!(await deleteTodo(event))) {
     return {
       statusCode: 404,
-      body: JSON.stringify({error: 'ITEM DOES NOT EXIST'})
+      body: JSON.stringify({error: 'THIS ITEM DOES NOT EXIST SIR'})
     };
   }
   //return undefined

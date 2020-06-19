@@ -4,55 +4,54 @@ import { APIGatewayProxyEvent } from 'aws-lambda';
 
 import TodosAccess from '../dataLayer/todosAccess';
 import TodosStorage from '../dataLayer/todosStorage';
-import { getUserId } from '../lambda/utils';
+import { getmyUserID } from '../lambda/utils';
 import { CreateTodoRequest } from '../requests/CreateTodoRequest';
 import { UpdateTodoRequest } from '../requests/UpdateTodoRequest';
 import { TodoItem } from '../models/TodoItem';
 
-const todosAccess = new TodosAccess();
+const myTodosAccess = new TodosAccess();
+const myTodosStorage = new TodosStorage();
 
-//add todosStorage to store
 
-const todosStorage = new TodosStorage();
 
 export async function createTodo(event: APIGatewayProxyEvent,
                                  createTodoRequest: CreateTodoRequest): Promise<TodoItem> {
-    const todoId = uuid.v4();
-    const userId = getUserId(event);
-   
-    const createdAt = new Date(Date.now()).toISOString();
+    const myTodoID = uuid.v4();
+    const myUserID = getmyUserID(event);
+
+    const timeCreated = new Date(Date.now()).toISOString();
 
 
 
     const todoItem = {
-        userId,
-        todoId,
-        createdAt,
+        myUserID,
+        myTodoID,
+        timeCreated,
         done: false,
-        attachmentUrl: `https://${todosStorage.getBucketName()}.s3.amazonaws.com/${todoId}`, ...createTodoRequest
+        attachmentUrl: `https://${myTodosStorage.getBucketName()}.s3.amazonaws.com/${myTodoID}`, ...createTodoRequest
     };
 
-    await todosAccess.addTodoToDB(todoItem);
+    await myTodosAccess.addTodoToDB(todoItem);
     return todoItem;
 }
 
 export async function deleteTodo(event: APIGatewayProxyEvent) {
-    const todoId = event.pathParameters.todoId;
-    const userId = getUserId(event);
+    const myTodoID = event.pathParameters.myTodoID;
+    const myUserID = getmyUserID(event);
 
-    if (!(await todosAccess.getTodoFromDB(todoId, userId))) {
+    if (!(await myTodosAccess.getTodoFromDB(myTodoID, myUserID))) {
     return false;
     }
 
-    await todosAccess.deleteTodoFromDB(todoId, userId);
+    await myTodosAccess.deleteTodoFromDB(myTodoID, myUserID);
         return true;
 }
 
 export async function getTodo(event: APIGatewayProxyEvent) {
-    const todoId = event.pathParameters.todoId;
-    
-    const userId = getUserId(event);
-return await todosAccess.getTodoFromDB(todoId, userId);
+    const myTodoID = event.pathParameters.myTodoID;
+
+    const myUserID = getmyUserID(event);
+return await myTodosAccess.getTodoFromDB(myTodoID, myUserID);
 }
 
 
@@ -61,35 +60,35 @@ return await todosAccess.getTodoFromDB(todoId, userId);
 
 
 export async function getTodos(event: APIGatewayProxyEvent) {
-    const userId = getUserId(event);
-  return await todosAccess.getAllTodosFromDB(userId);
+    const myUserID = getmyUserID(event);
+  return await myTodosAccess.getAllTodosFromDB(myUserID);
 }
 
 export async function updateTodo(event: APIGatewayProxyEvent,
                                  updateTodoRequest: UpdateTodoRequest) {
-    const todoId = event.pathParameters.todoId;
-   
-    const userId = getUserId(event);
+    const myTodoID = event.pathParameters.myTodoID;
 
-    if (!(await todosAccess.getTodoFromDB(todoId, userId))) {
+    const myUserID = getmyUserID(event);
+
+    if (!(await myTodosAccess.getTodoFromDB(myTodoID, myUserID))) {
         return false;
     }
 
-    await todosAccess.updateTodoInDB(todoId, userId, updateTodoRequest);
+    await myTodosAccess.updateTodoInDB(myTodoID, myUserID, updateTodoRequest);
     return true;
 }
 
 export async function generateUploadUrl(event: APIGatewayProxyEvent) {
-    const bucket = todosStorage.getBucketName();
+    const bucket = myTodosStorage.getBucketName();
     const urlExpiration = process.env.SIGNED_URL_EXPIRATION;
-  
-      const todoId = event.pathParameters.todoId;
 
-    const createSignedUrlRequest = {
+      const myTodoID = event.pathParameters.myTodoID;
+
+    const mySignedURLReq = {
         Bucket: bucket,
-        Key: todoId,
+        Key: myTodoID,
         Expires: urlExpiration
     }
 
-    return todosStorage.getPresignedUploadURL(createSignedUrlRequest);
+    return myTodosStorage.getPresignedUploadURL(mySignedURLReq);
 }

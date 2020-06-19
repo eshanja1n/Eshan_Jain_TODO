@@ -14,18 +14,18 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   if (!newTodo.name) {
     return {
       statusCode: 400,
-      body: JSON.stringify({error: 'NAME IS EMPTY'})
+      body: JSON.stringify({error: 'THE NAME IS EMPTY SIR'})
     };
   }
 
-  const todoItem = await createTodo(event, newTodo);
-  
-//return undefined  
+  const myTodo = await createTodo(event, newTodo);
+
+//return undefined
 
   return {
     statusCode: 201,
     headers: {'Access-Control-Allow-Origin': '*','Access-Control-Allow-Credentials': true
     },
-    body: JSON.stringify({item: todoItem})
+    body: JSON.stringify({item: myTodo})
   };
 }
